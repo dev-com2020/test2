@@ -1,7 +1,10 @@
 import time
 
 from selenium import webdriver
+from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 
 def test_pierwszy():
@@ -27,6 +30,18 @@ def test_drugi():
     action.context_click(link).perform()
     element = driver.find_element(By.CSS_SELECTOR, ".context-menu-icon-copy")
     time.sleep(1)
+    try:
+        WebDriverWait(driver, 10).until(
+            EC.frame_to_be_available_and_switch_to_it((By.ID, "gdpr-consent-notice"))
+        )
+
+        WebDriverWait(driver, 15).until(
+            EC.element_to_be_clickable((By.ID, "save"))
+        ).click()
+        driver.switch_to.default_content()
+
+    except NoSuchElementException:
+        pass
     element.click()
     driver.switch_to.alert.accept()
     time.sleep(2)
