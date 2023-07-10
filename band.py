@@ -11,14 +11,13 @@ from selenium.webdriver.common.by import By
 BANDCAMP_URL = 'https://bandcamp.com/'
 
 TrackRec = namedtuple('TrackRec',
-                     ['title',
-                      'artist',
-                      'artist_url',
-                      'album',
-                      'album_url',
-                      'timestamp'   # when you played it
-                     ])
-
+                      ['title',
+                       'artist',
+                       'artist_url',
+                       'album',
+                       'album_url',
+                       'timestamp'  # when you played it
+                       ])
 
 
 class BandLeader():
@@ -33,9 +32,9 @@ class BandLeader():
                 next(dbreader)  # skip header
                 self.database = [TrackRec(*row) for row in dbreader]
 
-        self.browser = webdriver.Chrome()
         opts = Options()
         opts.add_argument('--headless')
+        self.browser = webdriver.Chrome(options=opts)
         self.browser.get(BANDCAMP_URL)
 
         self._current_track_number = 1
@@ -47,11 +46,12 @@ class BandLeader():
         self.thread = Thread(target=self._maintain)
         self.thread.daemon = True
         self.thread.start()
+
         self.tracks()
 
     def _maintain(self):
         self._update_db()
-        sleep(20)
+        sleep(5)
 
     def save_db(self):
         with open(self.database_path, 'w', newline='') as dbfile:
@@ -80,11 +80,11 @@ class BandLeader():
 
         try:
             if self.is_playing():
-                title = self.browser.find_element(By.CLASS_NAME,'title').text
-                album_detail = self.browser.find_element(By.CSS_SELECTOR,'.detail-album > a')
+                title = self.browser.find_element(By.CLASS_NAME, 'title').text
+                album_detail = self.browser.find_element(By.CSS_SELECTOR, '.detail-album > a')
                 album_title = album_detail.text
                 album_url = album_detail.get_attribute('href').split('?')[0]
-                artist_detail = self.browser.find_element(By.CSS_SELECTOR,'.detail-artist > a')
+                artist_detail = self.browser.find_element(By.CSS_SELECTOR, '.detail-artist > a')
                 artist = artist_detail.text
                 artist_url = artist_detail.get_attribute('href').split('?')[0]
                 return TrackRec(title, artist, artist_url, album_title, album_url, ctime())
@@ -135,10 +135,17 @@ class BandLeader():
             self.more_tracks()
             self.play(1)
 
-
     def pause(self):
         self.play()
 
+    def quit(self):
+        self.browser.quit()
+
+
 if __name__ == '__main__':
     t = BandLeader('test.csv')
-    t.play(1)
+    t.play(6)
+    sleep(10)
+    t.pause()
+    # t.save_db()
+    t.quit()
